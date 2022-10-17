@@ -1,13 +1,14 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { useLocation, useParams } from "react-router-dom";
+import Content from "../components/content/Content";
 
 const Home = (): JSX.Element => {
-  const params = useParams();
-  const location = useLocation();
   return (
     <div>
       <h1>Home</h1>
-      {JSON.stringify({ params, location }, null, 2)}
+      <Suspense fallback={<p>Loading...</p>}>
+        <Content type="post" />
+      </Suspense>
     </div>
   );
 };

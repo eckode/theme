@@ -3,6 +3,9 @@
 # developer specific
 /ssl
 
+# Local development
+.wds
+
 # dependencies
 /node_modules
 /.pnp

@@ -18,18 +18,18 @@ function enqueue(): void
 {
 	enqueue\script('index');
 	wp_localize_script('index', 'Eckode', [
-		'config'   		=> [
-			'base' 	 => rest_url('wp/v2'),
+		'config'  => [
+			'endpoint' => rest_url('wp/v2'),
 			'nonces' => [
 				'rest' => wp_create_nonce('wp_rest'),
 			],
-			'posts_per_page' => (int) get_option('posts_per_page', 6),
+			'posts_per_page' => (int) get_option('posts_per_page', 9),
 		],
-		'static' 	 => [
+		'static' => [
 			'menus' => menu\get_json(),
 		],
 		'rest_bases' => rest\map_bases(),
-		'boot' 		 => boot\get_json()
+		'boot' 		 => boot\get_json(),
 	]);
 }
 

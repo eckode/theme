@@ -10,6 +10,7 @@ const config = devConfig().then(() => {
 
   return {
     ...defaultConfig,
+    devtool: "cheap-module-source-map",
     devServer: {
       ...defaultConfig.devServer,
       hot: true,

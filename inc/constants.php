@@ -7,8 +7,8 @@ const CONTENT_MODEL = [
     'path'           => '',
     'content'        => '',
     'context'        => '',
-    'contextValue'   => '',
+    'context_value'   => '',
     'props'           => [],
 ];
 
-const ALLOWED_MENUS = ['off_canvas', 'top_level', 'footer_menu', 'main'];
+const ALLOWED_MENUS = ['footer', 'main'];

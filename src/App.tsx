@@ -1,21 +1,20 @@
 import React from "react";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  createRoutesFromElements,
-  Route,
-  //Routes,
-} from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import Layout from "./components/Layout";
+import { ThemeProvider } from "styled-components";
 //CSS
 import "./App.css";
 
-const router = createBrowserRouter(
-  createRoutesFromElements(<Route path="*" element={<Layout />} />),
-);
+import { default as theme } from "./theme";
 
-const Router: React.FC = (): JSX.Element => {
-  return <RouterProvider router={router} />;
+const App = (): JSX.Element => {
+  return (
+    <BrowserRouter>
+      <ThemeProvider theme={theme}>
+        <Layout />
+      </ThemeProvider>
+    </BrowserRouter>
+  );
 };
 
-export default Router;
+export default App;

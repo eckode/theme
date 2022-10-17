@@ -1,9 +1,14 @@
+import { Model } from "./content";
 import * as TaxonomyTypes from "./taxonomy.d";
-import * as ContentTypes from "./content.d";
 
-type StringProperty = { [key: string]: string };
+type ContentBody = string;
+
+type StringProperty = Record<string, string>;
 
 type DbId = number;
+
+/** Endpoint appended to rest requests url */
+export type Endpoint = string;
 
 /** The name of this aliase should probably be Templates */
 export type Contexts =
@@ -14,46 +19,58 @@ export type Contexts =
   | "taxonomy_archive"
   | "home";
 
-  /** Describes Context type aliase */
-type ContextValues =
+/** Describes Context type aliase */
+export type ContextValues =
   | "post"
   | "page"
+  | "product"
+  | "entry"
   | "category"
   | "post_tag"
   | "nav_menu_item"
   | "custom";
 
-export interface ContentModel {
+type MenuLocations = "main" | "footer";
+
+export interface ContentProps {
+  id: DbId;
+  context: Contexts;
+  context_value: ContextValues;
+  breadcrumb: Array<string>;
+  // Optional
+  excerpt?: string;
+  target?: "_blank" | string;
+  classes?: Array<string>;
+}
+
+export interface ContentModel extends Model {
   id: DbId;
   path: string;
-  content: ContentTypes.ContentBody | TaxonomyTypes.TaxDescription | "";
+  content: ContentBody | TaxonomyTypes.TaxDescription | "";
   context: Contexts;
-  contextValue: ContextValues;
-  title: ContentTypes.ContentTitle | TaxonomyTypes.TaxTitle | "";
+  context_value: ContextValues;
+  title: ContentTitle | TaxonomyTypes.TaxTitle | "";
+  props: ContentProps & Partial<Record<ContextValues, Array<ContentModel>>>;
 }
 
 export interface MenuModel extends ContentModel {
-  context: Contexts;
-  props: {
-    id: DbId;
-    target: '_blank' | string;
-    classes: Array<string>;
-    context: Contexts;
-    contextValue: ContextValues;
-    breadcrumb: Array<string>;
-  };
   children: Array<MenuModel>;
 }
 
 type StaticObject = {
-  menus: { [key: string]: Array<MenuModel> };
+  menus: { [K in MenuLocations]?: Array<MenuModel> };
 };
 
 type Eckode = {
   nonces: StringProperty;
-  rest_bases: StringProperty;
+  rest_bases: Record<"post_type" | "taxonomy", Record<ContextValues, string>>;
   static: StaticObject;
   boot: ContentModel;
+  config: {
+    endpoint: Endpoint;
+    nonces: StringProperty;
+    posts_per_page: number;
+  };
 };
 
 declare global {

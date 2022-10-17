@@ -2,9 +2,9 @@
 
 namespace Eckode\init;
 
+use Eckode\Rest as Rest;
 use Eckode\utils\{
 	menu,
-	rest
 };
 
 function init()
@@ -162,6 +162,8 @@ function init()
 		'rest_base'         => 'entry-categories',
 	);
 	register_taxonomy( 'entry-category', array( 'entry' ), $args );
+	add_theme_support( 'post-thumbnails' );
+	new Rest();
 }
 
 add_action('init', __NAMESPACE__ . '\init');

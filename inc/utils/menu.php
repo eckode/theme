@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace Eckode\utils\menu;
 
+use Eckode\Unify;
+
 // Constants
 use const Eckode\{
 	ALLOWED_MENUS,
@@ -23,10 +25,8 @@ function init(): void
 {
 	register_nav_menus(
 		[
-			'top_level'   => __('Top level', 'eckode'),
-			'off_canvas'  => __('Off canvas', 'eckode'),
-			'footer_menu' => __('Footer Menu', 'eckode'),
-			'main'        => __('Main', 'eckode'),
+			'footer' => __('Footer', 'eckode'),
+			'main'   => __('Main', 'eckode'),
 		]
 	);
 }
@@ -35,7 +35,7 @@ function get_json(): array
 {
 	$model = wp_parse_args([
 		'context' 	   	   => 'single',
-		'contextValue' 	   => 'nav_menu_item',
+		'context_value' 	   => 'nav_menu_item',
 		// Temporary
 		'menu_item_parent' => 0,
 		// Props
@@ -72,67 +72,74 @@ function get_json(): array
 
 			// @todo Add support for external links
 			$path = trim(wp_make_link_relative($menu_item->url), '/');
+			$path = '' === $path ? '/' : $path;
 
-			$new_menu_item 			  		   = $model;
-			$new_menu_item['id'] 	  		   = $menu_item->ID;
-			$new_menu_item['path'] 	  		   = '' === $path ? '/' : $path;
-			$new_menu_item['title'] 		   = $menu_item->title;
-			$new_menu_item['content'] 		   = $menu_item->description;
+			$new_menu_item = Unify::configure($menu_item)
+				->add_context('single', 'nav_menu_item')
+				->override_mapping(['title' => 'title'])
+				->add_props(['excerpt'])
+				->additional_props(function ($unify) use ($path, $page_on_front) {
+					$props = [
+						/** Attributes */
+						'title' 	 	=> $unify['post_excerpt'],
+						'target' 	 	=> $unify['target'],
+						'classes' 	 	=> !empty($unify['classes'][0]) ? $unify['classes'] : [],
+						/** Target props, these are specific to "nav_menu_item" */
+						'id' 		 	=> (int) $unify['object_id'],
+						'context' 	   	=> 'post_type' === $unify['type'] ? 'single' : $unify['type'],
+						'context_value'	=> $unify['object'],
+						'breadcrumb' 	=> '' !== $path ? explode('/', $path) : null,
+					];
+					// Special treatment for custom menu items.
+					if ($unify['type'] === 'custom') {
+						// Home
+						if ('/' === $path) {
+							if ($page_on_front > 0) {
+								$props['id'] 		   = $page_on_front;
+								$props['context'] 	   = 'single';
+								$props['context_value'] = 'page';
+							} else {
+								$props['context'] 	   = 'home';
+								$props['context_value'] = 'latest_posts';
+							}
+						} else {
+							$url_to_check = $unify['url'];
+							$site_url = untrailingslashit(home_url());
+
+							// Test if valid url i.e. /path
+							if (!filter_var($url_to_check, FILTER_VALIDATE_URL)) {
+								$url_to_check = trailingslashit($site_url) . $path;
+							}
+
+							// External?
+							if (false === (strpos($url_to_check, $site_url))) {
+								$props['context'] 	   = 'external';
+								$props['context_value'] = $unify['url'];
+							} else {
+								$post_id = url_to_postid($url_to_check);
+								if ($post_id > 0) {
+									$post = get_post($post_id);
+									$props['id'] 		   = $post->ID;
+									$props['context'] 	   = 'single';
+									$props['context_value'] = $post->post_type;
+								} else {
+									$props['context'] 	   = 'not_found';
+									$props['context_value'] = '';
+								}
+							}
+						}
+					}
+					return $props;
+				})
+				->map();
+
+			$new_menu_item['path'] = $path;
+
+			// This property is removed in tree()
 			$new_menu_item['menu_item_parent'] = (int) $menu_item->menu_item_parent;
 
-			$props = [
-				/** Attributes */
-				'title' 	 	=> $menu_item->post_excerpt,
-				'target' 	 	=> $menu_item->target,
-				'classes' 	 	=> !empty($menu_item->classes[0]) ? $menu_item->classes : [],
-				/** Target props, these are specific to "nav_menu_item" */
-				'id' 		 	=> max((int) $menu_item->object_id, 0),
-				'context' 	   	=> 'post_type' === $menu_item->type ? 'single' : $menu_item->type,
-				'contextValue'	=> $menu_item->object,
-				'breadcrumb' 	=> '' !== $path ? explode('/', $path) : null,
-			];
-
-			// Special treatment for custom menu items.
-			if ($menu_item->type === 'custom') {
-				// Home
-				if ('/' === $new_menu_item['path']) {
-					if ($page_on_front > 0) {
-						$props['id'] 		   = $page_on_front;
-						$props['context'] 	   = 'single';
-						$props['contextValue'] = 'page';
-					} else {
-						$props['context'] 	   = 'home';
-						$props['contextValue'] = 'latest_posts';
-					}
-				}
-				// External
-				$url_to_check = $menu_item->url;
-				$site_url = untrailingslashit(home_url());
-
-				// Test if valid url i.e. /path
-				if (!filter_var($url_to_check, FILTER_VALIDATE_URL)) {
-					$url_to_check = trailingslashit($site_url) . $path;
-				}
-
-				if (false === (strpos($url_to_check, $site_url))) {
-					$props['context'] 	   = 'external';
-					$props['contextValue'] = $menu_item->url;
-				} else {
-					$post_id = url_to_postid( $url_to_check );
-					if ( $post_id > 0 ) {
-						$post = get_post( $post_id );
-						$props['id'] 		   = $post->ID;
-						$props['context'] 	   = 'single';
-						$props['contextValue'] = $post->post_type;
-					} else {
-						$props['context'] 	   = 'not_found';
-						$props['contextValue'] = '';
-					}
-				}
-			}
-
 			/** Filter both arrays to optimize outputs */
-			$new_menu_item['props'] = array_filter($props, $filter_callback, ARRAY_FILTER_USE_BOTH);
+			$new_menu_item['props'] = array_filter($new_menu_item['props'], $filter_callback, ARRAY_FILTER_USE_BOTH);
 			$found_menus[$location][] = array_filter($new_menu_item, $filter_callback, ARRAY_FILTER_USE_BOTH);
 		}
 

@@ -1,22 +1,15 @@
 import React, { lazy } from "react";
-import {
-  Route,
-  Routes,
-  // Link,
-  // Outlet,
-} from "react-router-dom";
-import Content from "./content-type/ContentType";
+import { Route, RouteObject, Routes } from "react-router-dom";
 
 import Header from "./Header";
+import Footer from "./Footer";
 import Home from "../routes/Home";
 
 // Utils
 import { useRouteElement } from "../app/hooks";
-import { Contexts } from "../types";
 
 interface RouteComponents {
-  [key: string]:
-    | React.LazyExoticComponent<() => React.ReactElement>;
+  [key: string]: React.LazyExoticComponent<() => React.ReactElement>;
 }
 
 // Lazy components
@@ -31,26 +24,26 @@ const routeComponents: RouteComponents = {
 // Layout
 const Layout = (): JSX.Element => {
   const element = useRouteElement();
-  console.log(element);
   const DynamicLazyComponent = routeComponents[element] ?? React.Fragment;
+  console.log("LAYOUT:", element);
   return (
-    <>
+    <div className="eckode">
       <Header />
-      <Content />
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
-          {'' !== element && <Route
-            path="*"
-            element={
-              <React.Suspense fallback={<>Loading...</>}>
-                <DynamicLazyComponent />
-              </React.Suspense>
-            }
-          />}
-        </Routes>
+            <Route path="/" element={<Home />} />
+            <Route
+                path="*"
+                element={
+                  <React.Suspense fallback={<>Loading...</>}>
+                    <DynamicLazyComponent />
+                  </React.Suspense>
+                }
+              />
+          </Routes>
       </main>
-    </>
+      <Footer />
+    </div>
   );
 };
 

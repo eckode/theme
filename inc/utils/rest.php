@@ -45,7 +45,7 @@ function map_bases(): array
 		$taxonomies[$registered_taxonomy] = get_taxonomy($registered_taxonomy)->rest_base;
 	}
 
-	$cached_return = apply_filters(__FUNCTION__, ['taxonomy' => $taxonomies, 'post_type' => $post_types]);
+	$cached_return ??= apply_filters(__FUNCTION__, ['taxonomy' => $taxonomies, 'post_type' => $post_types]);
 	
 	return $cached_return;
 }
